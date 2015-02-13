@@ -39,6 +39,7 @@ class TimeManagerControl(QObject):
             self.current_timer.deleteLater()
         # FIXME disabling the time manager plugin sometimes crashes QGIS
         # Maybe C related memory issues with slots
+        self.tearDownModelConnections()
         self.getTimeLayerManager().deactivateTimeManagement()
         self.iface.unregisterMainWindowAction(self.actionShowSettings)
         self.guiControl.unload()
@@ -49,6 +50,7 @@ class TimeManagerControl(QObject):
         #QgsProject.instance().writeMapLayer.disconnect(self.writeSettings)
         QObject.disconnect(QgsProject.instance(), SIGNAL("writeProject(QDomDocument &)"),
                            self.writeSettings)
+        self.iface.mapCanvas().mapCanvasRefreshed.disconnect(self.waitAfterRenderComplete)
 
         QgsMapLayerRegistry.instance().layerWillBeRemoved.disconnect(self.timeLayerManager.removeTimeLayer)
         QgsMapLayerRegistry.instance().removeAll.disconnect(self.timeLayerManager.clearTimeLayerList)
@@ -102,11 +104,16 @@ class TimeManagerControl(QObject):
             self.actionShowSettings.triggered.connect(self.showOptionsDialog)
 
     def initModelConnections(self):
-
-        # establish connections to timeLayerManager
         self.timeLayerManager.timeRestrictionsRefreshed.connect(self.refreshGuiWithCurrentTime)
         self.timeLayerManager.projectTimeExtentsChanged.connect(self.refreshGuiTimeExtents)
         self.timeLayerManager.lastLayerRemoved.connect(self.disableAnimationExport)
+
+    def tearDownModelConnections(self):
+        # delete connections to timeLayerManager
+        self.timeLayerManager.timeRestrictionsRefreshed.disconnect(self.refreshGuiWithCurrentTime)
+        self.timeLayerManager.projectTimeExtentsChanged.disconnect(self.refreshGuiTimeExtents)
+        self.timeLayerManager.lastLayerRemoved.disconnect(self.disableAnimationExport)
+
 
     def restoreDefaults(self):
         """restore plugin default settings"""

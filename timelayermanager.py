@@ -16,7 +16,7 @@ class TimeLayerManager(QObject):
     """Manages all layers that can be queried temporally and provides navigation in time"""
 
     # the signal for when the current time position is changed
-    timeRestrictionsRefreshed = pyqtSignal(datetime)
+    timeRestrictionsRefreshed = pyqtSignal(object)
     # the signal when the start and end time are changed
     projectTimeExtentsChanged = pyqtSignal(object)
     # the signal for when we dont have any layers left managed by TimeManager
