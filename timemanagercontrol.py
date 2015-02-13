@@ -34,6 +34,9 @@ class TimeManagerControl(QObject):
 
     def unload(self):
         """unload the plugin"""
+        if self.current_timer:
+            self.current_timer.stop()
+            self.current_timer.deleteLater()
         # FIXME disabling the time manager plugin sometimes crashes QGIS
         # Maybe C related memory issues with slots
         self.getTimeLayerManager().deactivateTimeManagement()
@@ -107,6 +110,7 @@ class TimeManagerControl(QObject):
 
     def restoreDefaults(self):
         """restore plugin default settings"""
+        self.current_timer = None
         self.animationActivated = False
         self.loopAnimation = False
         self.playBackwards = False
@@ -249,7 +253,13 @@ class TimeManagerControl(QObject):
         if self.saveAnimation: # make animation/export run as fast as possible
             self.playAnimation(painter)
         else:
-            QTimer.singleShot(self.animationFrameLength,self.playAnimation)
+            if self.current_timer:
+                self.current_timer.stop()
+                self.current_timer.deleteLater()
+            self.current_timer = QTimer()
+            self.current_timer.timeout.connect(self.playAnimation)
+            self.current_timer.setSingleShot(True)
+            self.current_timer.start(self.animationFrameLength)
 
     def generate_frame_filename(self, path, frame_index, currentTime):
          return os.path.join(path,"{}{}_{}.png".format(FRAME_FILENAME_PREFIX,
